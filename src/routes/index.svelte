@@ -10,44 +10,39 @@
     import variables from "../lib/constants/variables";
     import type { Coin, Country } from "../lib/types";
 
-    const { countriesApiUrl, convertApiUrl, socketUrl, socketApiKey } =
-        variables;
+    const {
+        countriesApiUrl,
+        convertApiUrl,
+        convertApiKey,
+        socketUrl,
+        socketApiKey,
+    } = variables;
+
     let countries: Country[] = [];
-    let currencyRate = 1;
-    let currentCurrency: String = "USDT";
+    let USDTToCurrencyRate = 1;
+    let currentCurrency = "USD";
+    $: getCurrencyPrice = (coin: any) => coin.USDTPrice * USDTToCurrencyRate;
     let coins: Coin[] = [
         {
             symbolName: "BTC-USDT",
             USDTPrice: 0,
             changePercent: 0,
             volume: 0,
-            currencyPrice: 0,
         },
         {
             symbolName: "ETH-USDT",
             USDTPrice: 0,
             changePercent: 0,
             volume: 0,
-            currencyPrice: 0,
         },
         {
             symbolName: "ADA-USDT",
             USDTPrice: 0,
             changePercent: 0,
             volume: 0,
-            currencyPrice: 0,
         },
     ];
 
-    const query = gql`
-        {
-            countries {
-                name
-                currency
-                code
-            }
-        }
-    `;
     const getCountriesSlice = (sourceArray: Country[], length: number) => {
         let index = 0;
         let finalArray: Country[] = [];
@@ -66,20 +61,30 @@
     };
 
     const getCountries = async () => {
+        const query = gql`
+            {
+                countries {
+                    name
+                    currency
+                    code
+                }
+            }
+        `;
         const result = await request(countriesApiUrl, query);
         countries = getCountriesSlice(result.countries, 5);
-        console.log("countries: ", countries);
     };
-    const currencySelected = async (currency: { detail: string }) => {
-        currentCurrency = currency.detail;
-        let result = await fetch(convertApiUrl + currency.detail, {
-            headers: {
-                apiKey: "1xM0aDUHSlpiB1SYbKSjQtd1xoa13DG8",
-            },
-        });
+
+    const currencySelected = async ({
+        detail: currency,
+    }: {
+        detail: string;
+    }) => {
+        currentCurrency = currency || "USD";
+        let result = await fetch(
+            `${convertApiUrl}${convertApiKey}&currencies=${currentCurrency}`
+        );
         let test = await result.json();
-        currencyRate = test.result;
-        console.log("convertRate: ", currencyRate);
+        USDTToCurrencyRate = test.data[currentCurrency].value;
     };
 
     onMount(() => {
@@ -112,7 +117,6 @@
                 USDTPrice,
                 changePercent: changePercent * 100,
                 volume,
-                currencyPrice: USDTPrice * currencyRate,
             };
         };
 
@@ -127,18 +131,25 @@
     });
 </script>
 
-<DropDown
-    items={countries}
-    label="Select your country"
-    placeholder="Start entering the country"
-    on:select={currencySelected}
-/>
-<div class="container flex w-3/4 m-auto gap-2">
+<div class="m-auto w-1/3 mb-4">
+    <DropDown
+        options={countries}
+        optionLabel="name"
+        optionKey="currency"
+        Inputlabel="Select your country"
+        placeholder="Start entering the country"
+        on:select={currencySelected}
+    />
+</div>
+<div class="container flex w-2/3 m-auto gap-2">
     {#each coins as coin}
         <div class="w-1/3">
             <Card {coin} />
-            <p>{currentCurrency} : {coin.currencyPrice}</p>
+            <p class="font-bold text-xs">
+                {currentCurrency}: {parseFloat(
+                    getCurrencyPrice(coin).toFixed(6)
+                )}
+            </p>
         </div>
     {/each}
 </div>
-<img src={`https://flagcdn.com/24x18/ad.png`} alt="" />

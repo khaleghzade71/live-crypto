@@ -3,5 +3,4 @@ export default interface Coin {
     USDTPrice: number;
     changePercent: number;
     volume: number;
-    currencyPrice: number
 };
