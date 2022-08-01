@@ -5,32 +5,35 @@
     export let Inputlabel: string;
     export let placeholder: string;
     import { createEventDispatcher } from "svelte";
-
+    interface Option {
+        [key: string]: string;
+    }
     let showOptions = false;
-    let searchTerm = "";
-    let isSelected = false;
+    let selectedItem: Option = { [optionKey]: "", [optionLabel]: "" };
     const dispatch = createEventDispatcher();
     $: searchedItems = () => {
         return options.filter((item: { [optionLabel: string]: string }) =>
-            item[optionLabel].toLowerCase().includes(searchTerm.toLowerCase())
+            item[optionLabel]
+                .toLowerCase()
+                .includes(selectedItem[optionLabel].toLowerCase())
         );
     };
 
     const setShowOptions = (state: boolean) => {
         showOptions = state;
-        if (state == false) searchTerm = "";
+        if (!state) selectedItem = { [optionKey]: "", [optionLabel]: "" };
     };
 
-    const selectItem = (item: any) => {
-        searchTerm = item[optionLabel];
+    const selectItem = (item: Option) => {
         showOptions = false;
-        isSelected = true;
-        dispatch("select", item[optionKey]);
+        if (item[optionKey] !== selectedItem[optionKey]) {
+            dispatch("select", item[optionKey]);
+        }
+        selectedItem = { ...item };
     };
 
     const removeSelectedItem = () => {
-        isSelected = false;
-        searchTerm = "";
+        selectedItem = { [optionKey]: "", [optionLabel]: "" };
         dispatch("select", "");
     };
 </script>
@@ -55,12 +58,12 @@
     </svg>
     <input
         on:input={() => setShowOptions(true)}
-        bind:value={searchTerm}
+        bind:value={selectedItem[optionLabel]}
         tabindex="0"
         class="w-full z-50 bg-inherit outline-none"
         {placeholder}
     />
-    {#if isSelected}
+    {#if selectedItem[optionKey]}
         <svg
             on:click={removeSelectedItem}
             xmlns="http://www.w3.org/2000/svg"
