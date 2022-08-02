@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getCountriesApiUrl } from "$lib/constants";
 import { request, gql } from "graphql-request";
 
@@ -17,7 +18,8 @@ export const GET = async () => {
         body: { countries }
     }
 }
-const getCountriesSlice = (sourceArray, length) => {
+
+function getCountriesSlice(sourceArray, length) {
     let index = 0;
     let finalArray = [];
     while (finalArray.length < length) {

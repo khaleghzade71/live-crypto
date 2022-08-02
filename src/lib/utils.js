@@ -1,3 +1,4 @@
+// @ts-nocheck
 export function post(endpoint, data) {
     return fetch(endpoint, {
         method: 'POST',

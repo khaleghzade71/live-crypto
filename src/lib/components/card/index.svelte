@@ -5,7 +5,7 @@
     export let coin: Coin;
 </script>
 
-<div class="card w-full shadow-lg rounded-md mb-2">
+<div class="card w-full min-w-300 shadow-lg rounded-md mb-2">
     <div class="p-5 pt-12 h-44">
         <span class="flex justify-between mb-2">
             <p>{coin.symbolName}</p>
