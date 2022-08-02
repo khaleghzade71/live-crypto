@@ -5,9 +5,8 @@
 <script lang="ts">
     import "../app.css";
     import { onMount } from "svelte";
-    import { request, gql } from "graphql-request";
     import { DropDown, Card } from "../lib/components/index";
-    import { getCountriesApiUrl, socketUrl } from "../lib/constants";
+    import { socketUrl } from "../lib/constants";
     import type { Coin, Country } from "../lib/types";
     import { getLocalStorage, post, setLocalStorage } from "$lib/utils";
 
@@ -15,6 +14,7 @@
     let USDTToCurrencyRate = 1;
     let currentCurrency = "USD";
     $: getCurrencyPrice = (coin: any) => coin.USDTPrice * USDTToCurrencyRate;
+
     let coins: Coin[] = [
         {
             symbolName: "BTC-USDT",
@@ -36,35 +36,10 @@
         },
     ];
 
-    const getCountriesSlice = (sourceArray: Country[], length: number) => {
-        let index = 0;
-        let finalArray: Country[] = [];
-        while (finalArray.length < length) {
-            if (
-                !finalArray.find(
-                    (country) =>
-                        country.currency === sourceArray[index].currency
-                )
-            ) {
-                finalArray = [...finalArray, sourceArray[index]];
-            }
-            index++;
-        }
-        return finalArray;
-    };
-
     const getCountries = async () => {
-        const query = gql`
-            {
-                countries {
-                    name
-                    currency
-                    code
-                }
-            }
-        `;
-        const result = await request(getCountriesApiUrl, query);
-        countries = getCountriesSlice(result.countries, 5);
+        const response = await fetch("/api/get-countries");
+        let result = await response.json();
+        countries = result.countries;
     };
 
     const currencySelected = async ({

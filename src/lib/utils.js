@@ -7,3 +7,11 @@ export function post(endpoint, data) {
         }
     }).then((result) => result.json());
 }
+
+export function setLocalStorage(itemName, itemValue) {
+    localStorage.setItem(itemName, itemValue);
+};
+
+export function getLocalStorage(itemName) {
+    return localStorage.getItem(itemName);
+};
