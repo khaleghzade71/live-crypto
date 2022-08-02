@@ -7,16 +7,9 @@
     import { onMount } from "svelte";
     import { request, gql } from "graphql-request";
     import { DropDown, Card } from "../lib/components/index";
-    import variables from "../lib/constants/variables";
+    import { getCountriesApiUrl, socketUrl } from "../lib/constants";
     import type { Coin, Country } from "../lib/types";
-
-    const {
-        countriesApiUrl,
-        convertApiUrl,
-        convertApiKey,
-        socketUrl,
-        socketApiKey,
-    } = variables;
+    import { getLocalStorage, post, setLocalStorage } from "$lib/utils";
 
     let countries: Country[] = [];
     let USDTToCurrencyRate = 1;
@@ -70,7 +63,7 @@
                 }
             }
         `;
-        const result = await request(countriesApiUrl, query);
+        const result = await request(getCountriesApiUrl, query);
         countries = getCountriesSlice(result.countries, 5);
     };
 
@@ -79,28 +72,60 @@
     }: {
         detail: string;
     }) => {
-        currentCurrency = currency || "USD";
-        let result = await fetch(
-            `${convertApiUrl}${convertApiKey}&currencies=${currentCurrency}`
-        );
-        let test = await result.json();
-        USDTToCurrencyRate = test.data[currentCurrency].value;
+        if (currency) {
+            currentCurrency = currency;
+            let result = await fetch(
+                `/api/convert-currency/${currentCurrency}`
+            );
+            let { rate } = await result.json();
+            USDTToCurrencyRate = rate;
+        } else {
+            currentCurrency = "USD";
+            USDTToCurrencyRate = 1;
+        }
+    };
+
+    const getToken = async () => {
+        let socketApiKey = await post("/api/get-token");
+        setLocalStorage("socket-token", socketApiKey.token);
     };
 
     onMount(() => {
-        const connection = new WebSocket(socketUrl + socketApiKey);
+        const init = async () => {
+            let socketApiKey = getLocalStorage("socket-token");
+            if (socketApiKey) {
+                const connection = new WebSocket(socketUrl + socketApiKey);
 
-        connection.onopen = () => {
-            connection.send(
-                JSON.stringify({
-                    id: 1545910660739,
-                    type: "subscribe",
-                    topic: `/market/snapshot:${coins
-                        .map((coin) => coin.symbolName)
-                        .join()}`,
-                    response: true,
-                })
-            );
+                connection.onopen = () => {
+                    connection.send(
+                        JSON.stringify({
+                            id: 1545910660739,
+                            type: "subscribe",
+                            topic: `/market/snapshot:${coins
+                                .map((coin) => coin.symbolName)
+                                .join()}`,
+                            response: true,
+                        })
+                    );
+                };
+                connection.onmessage = (event) => {
+                    let socketData = JSON.parse(event.data);
+                    if (JSON.parse(event.data).data) {
+                        update(socketData.data);
+                    }
+                };
+                connection.onclose = () => {
+                    setTimeout(() => {
+                        init();
+                    }, 1000);
+                };
+                connection.onerror = () => {
+                    getToken();
+                };
+            } else {
+                await getToken();
+                init();
+            }
         };
 
         const update = (socketData: any) => {
@@ -120,13 +145,7 @@
             };
         };
 
-        connection.onmessage = function (event) {
-            let socketData = JSON.parse(event.data);
-            if (JSON.parse(event.data).data) {
-                update(socketData.data);
-            }
-        };
-
+        init();
         getCountries();
     });
 </script>
