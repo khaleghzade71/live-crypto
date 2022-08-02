@@ -2,10 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 @layer utilities {
-    .max-w-300 {
-        max-width: 300px;
+    .min-w-300 {
+        min-width: 300px;
     }
-          .min-w-300 {
-              min-width: 300px;
-          }
 }
