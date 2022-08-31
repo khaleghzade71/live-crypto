@@ -1,9 +1,7 @@
 import { getTokenApiUrl } from "$lib/constants";
+import { post } from "$lib/utils";
 
 export const POST = async () => {
-    let result = await fetch(getTokenApiUrl, {
-        method: "POST",
-    })
-    let token = await result.json();
-    return { body: { token: token.data.token } }
+    let result = await post(getTokenApiUrl)
+    return { body: { token: result.data.token } }
 }

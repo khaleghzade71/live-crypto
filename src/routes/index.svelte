@@ -5,10 +5,10 @@
 <script lang="ts">
     import "../app.css";
     import { onMount } from "svelte";
-    import { DropDown, Card } from "../lib/components/index";
-    import type { Country } from "../lib/types";
+    import { DropDown, Card } from "$lib/components/index";
+    import type { Country } from "$lib/types";
     import { initSocket } from "./api/connect-socket";
-    import { coins } from "../stores/coins";
+    import { coins } from "$stores/coins";
 
     let countries: Country[] = [];
     let USDTToCurrencyRate = 1;
